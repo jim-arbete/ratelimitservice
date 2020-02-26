@@ -1,10 +1,18 @@
 import { IsIP, IsEmail } from 'class-validator';
-import { InputType, Field, ObjectType } from 'type-graphql';
+import { InputType, Field, ObjectType, registerEnumType } from 'type-graphql';
+
+export enum EventName {
+  'LOGIN_FAILED' = 'login_failed',
+  'LOGIN_SUCCEEDED' = 'login_succeeded',
+}
+registerEnumType(EventName, {
+  name: 'EventName',
+});
 
 @InputType()
 export class RatelimitInput {
-  @Field()
-  eventName: string;
+  @Field(type => EventName)
+  eventName: EventName;
 
   @Field()
   @IsIP()

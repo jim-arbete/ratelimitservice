@@ -1,0 +1,3 @@
+export const PORT = process.env.PORT ?? 4000;
+export const RATELIMIT_BANNEDIPSECONDS = process.env.RATELIMIT_BANNEDIPSECONDS ?? 90;
+export const RATELIMIT_FAILEDREQUESTS = process.env.RATELIMIT_FAILEDREQUESTS ?? 5;

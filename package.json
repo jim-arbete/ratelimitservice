@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
     "start": "npm run build && node build/index.js",
-    "dev": "ts-node-dev src/main.ts",
+    "dev": "set RATELIMIT_BANNEDIPSECONDS=3600&& ts-node-dev src/main.ts",
     "lint": "eslint '{src,apps,libs,test}/**/*.ts' --fix"
   },
   "repository": {

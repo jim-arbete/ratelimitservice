@@ -8,11 +8,8 @@ export class RatelimitResolver {
 
   @Query(returns => RatelimitResponse, { nullable: true })
   async ratelimit(@Arg('ratelimitInput') ratelimitInput: RatelimitInput): Promise<RatelimitResponse | undefined> {
-    console.log('ratelimitInput :', ratelimitInput);
-    const test = this.ratelimitService.checkRatelimit(ratelimitInput);
-
-    console.log('ratelimitService.checkRatelimit :', test);
-    // return await this.ratelimitService.checkRatelimit(ratelimitInput);
-    return { ipFrom: ratelimitInput.ip, isRateLimited: true };
+    console.log('RatelimitResolver => ratelimitInput :', ratelimitInput);
+    const response = this.ratelimitService.checkRatelimit(ratelimitInput);
+    return response;
   }
 }

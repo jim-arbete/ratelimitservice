@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
 import { buildSchema } from 'type-graphql';
+import { PORT } from './utils/config';
 
-const PORT = process.env.PORT || 4000;
-
+// const process.env.HOST
 async function bootstrap() {
   // build TypeGraphQL executable schema
   const schema = await buildSchema({
@@ -23,4 +23,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-console.log('test');
