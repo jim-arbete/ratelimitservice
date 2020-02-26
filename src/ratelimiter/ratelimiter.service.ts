@@ -1,5 +1,6 @@
 import { RatelimitInput, RatelimitResponse } from './ratelimiter.types';
 import { RATELIMIT_BANNEDIPSECONDS } from '../utils/config';
+import redis from '../utils/redis.config';
 
 type StateBannedIP = {
   ip: string;
@@ -8,8 +9,8 @@ type StateBannedIP = {
 
 type StateFailedRequests = {
   ip: string;
-  failedCount: number;
-  emails: [string];
+  timestamps: number[];
+  emails: string[];
 };
 
 interface RatelimitCustomSettings {
@@ -17,7 +18,7 @@ interface RatelimitCustomSettings {
 }
 
 const mockStateFailedRequests = [
-  // { ip: '10.0.0.0', timestamp: 1582672217534 },
+  { ip: '10.0.0.0', timestamps: [1582672217534, 1582673707990], emails: ['gg@gg.se'] },
   // { ip: '10.0.0.1', timestamp: 1582673707990 },
 ];
 
@@ -31,6 +32,7 @@ const computedBannedSeconds = 2500 * 1000;
 
 export class RatelimitService {
   configBannedSeconds: number;
+  redisClient: any;
   state = 0;
 
   stateFailedRequests: StateFailedRequests[] = [...mockStateFailedRequests];
@@ -38,6 +40,7 @@ export class RatelimitService {
 
   constructor(settings?: RatelimitCustomSettings) {
     this.configBannedSeconds = settings?.configBannedSeconds ?? computedBannedSeconds;
+    this.redisClient = redis;
   }
 
   checkRatelimit({ eventName, ip, email }: RatelimitInput): RatelimitResponse {
@@ -60,16 +63,35 @@ export class RatelimitService {
     // ELSE try to se if it's the REQUEST is a BANNABLE offense
     if (this.isRequestBannable({ eventName, ip, email })) return { ipFrom: ip, isRateLimited: true };
 
-    console.log('här?');
     this.flushOldBannedIps();
     if (this.isIpBanned(ip)) isRateLimited = true;
     return { ipFrom: ip, isRateLimited };
   }
 
-  isRequestBannable({ eventName, ip, email }: RatelimitInput): boolean {
-    if (eventName == 'login_succeeded') return false; // no offense done so quit early
+  async getStateFailedRequests(): Promise<any[]> {
+    // Wrapper for or store => Redis, or something else in the future..
+    // if (!this.redisClient) return [];
+    if (!this.redisClient) return [...mockStateFailedRequests];
+    try {
+      console.log('this.redisClient.get(test) :', this.redisClient.get('test'));
+      return this.redisClient.get('test');
+    } catch (e) {
+      return null;
+    }
+  }
 
+  async isRequestBannable({ eventName, ip, email }: RatelimitInput): Promise<boolean> {
+    if (eventName == 'login_succeeded') return false; // no offenses done, quit early
+
+    try {
+      await this.redisClient.set('test', '1337');
+    } catch (e) {
+      console.log(e);
+    }
+    // ip:timestamp
     // ADD the failed request to our STATE
+    const test = await this.getStateFailedRequests();
+    console.log('test :', test);
 
     // Check if To many failed requests!
     // if (failedCount >= 10) {

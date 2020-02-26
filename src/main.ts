@@ -5,12 +5,16 @@ import { PORT } from './utils/config';
 
 // const process.env.HOST
 async function bootstrap() {
-  // build TypeGraphQL executable schema
+  // await redis.set('test', '1337');
+  // const redtest = await redis.get('test');
+  // console.log('redtest :', redtest);
+
+  // Build TypeGraphQL executable schema
   const schema = await buildSchema({
     resolvers: [__dirname + '/**/*.resolver.{ts,js}'],
   });
 
-  // create apollo server
+  // Create apollo server
   const server = new ApolloServer({
     schema,
     playground: true,
