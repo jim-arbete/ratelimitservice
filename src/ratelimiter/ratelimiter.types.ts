@@ -31,3 +31,12 @@ export class RatelimitResponse {
   @Field()
   isRateLimited: boolean;
 }
+
+@ObjectType({ description: 'Used to check instances of loadbalance test' })
+export class Serverinfo {
+  @Field()
+  hostIPs: string;
+
+  @Field()
+  hostname: string;
+}

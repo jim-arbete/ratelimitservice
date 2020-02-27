@@ -4,16 +4,17 @@ services:
   redis-service:
     container_name: redis-service
     image: redis:alpine
-    restart: unless-stopped
     ports:
       - '6379:6379'
   ratelimiter-service:
     container_name: ratelimiter-service
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: local_ratelimiterservice:latest
+    build: .
     environment:
       RATELIMIT_BANNED_IP_SECONDS: 10
       RATELIMIT_FAILED_REQ_PER_OBSERVED_SECONDS: 10
     ports:
       - 4000:4000
+    deploy:
+      mode: replicated
+      replicas: 4

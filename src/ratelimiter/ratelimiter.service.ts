@@ -51,11 +51,6 @@ export class RatelimitService {
   async checkRatelimit({ eventName, ip, email }: RatelimitInput): Promise<RatelimitResponse> {
     let isRateLimited = false;
 
-    console.log('RatelimitService => computedBannedSeconds :', this.configBannedSeconds);
-    console.log('RatelimitService => configFailedRequestObservedSeconds :', this.configFailedRequestObservedSeconds);
-    console.log('RatelimitService => configMaxFailedRequestInObservedPeriod :', this.configMaxFailedRequestInObservedPeriod);
-    console.log('RatelimitService => configMaxFailedEmailsPerIP :', this.configMaxFailedEmailsPerIP);
-
     // If we can exit early to optimize the BAN check do it..
     // ELSE try to se if it's the REQUEST is a BANNABLE offense
     const quitEarlyCheck = await this.isRequestBannable({ eventName, ip, email });
@@ -93,27 +88,23 @@ export class RatelimitService {
     // Get prev state!
     const prevState = await this.getStateFailedRequestsByIP(ip);
 
-    // Remove state with OLD timestamps according to the `maxfailedRequestPerSecond`
+    // Remove state with OLD timestamps according to the `configFailedRequestObservedSeconds`
     const dateNow = Date.now();
     const timestamps = prevState?.timestamps
       ? prevState.timestamps.filter(timestamp => dateNow - timestamp < 1000 * this.configFailedRequestObservedSeconds)
       : [];
 
     // ADD the failed request to our STATE that tracks failed requests
-    try {
-      const newState = {
-        timestamps: [Date.now(), ...timestamps],
-        emails: prevState?.emails ? [...new Set([email, ...prevState.emails])] : [email],
-      };
-      await this.setStateFailedRequestsByIP(ip, newState);
-    } catch (e) {
-      console.log(e);
-    }
+    const newState = {
+      timestamps: [Date.now(), ...timestamps],
+      emails: prevState?.emails ? [...new Set([email, ...prevState.emails])] : [email],
+    };
+    await this.setStateFailedRequestsByIP(ip, newState);
 
     // Get fresh state!
     const currentState = await this.getStateFailedRequestsByIP(ip);
 
-    // Check if To many failed requests!
+    // Check if To many failed requests AND emails!
     if (timestamps.length > this.configMaxFailedRequestInObservedPeriod && currentState.emails.length > this.configMaxFailedEmailsPerIP) {
       this.setStateBannedIPs(ip); // Ban hammer time!
       return true;
