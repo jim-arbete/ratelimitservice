@@ -1,7 +1,8 @@
 # Ratelimiter Microservice - Using GraphQL API and Redis
 
 ## Installation Prerequisites
-1. Install Node.js version 11 or later `https://nodejs.org/en/download/`. 
+1. Install Node.js version 12 or later `https://nodejs.org/en/download/`. 
+2. Install Docker `https://docs.docker.com/get-started/`. 
 
 ## Installation
 
@@ -27,21 +28,23 @@ Run `npm run build` to build the project. The build artifacts will be stored in 
 
 Run `npm start` to the project in production mode on your local machine. 
 
+
 ## Development with Docker
-### 1A) Start the app by using `docker-compose`:
+### 1A) Start the app stack by using `docker-compose`:
 ```bash
 $ docker-compose up --build
 ```
 You can visit the url in browser http://localhost:4000 now.
 
-### 1B) Start the app by using regular docker image:
+### 1B) Start the app stack by using regular docker image:
 ```bash
 $ docker build -t local_ratelimiterservice:latest
 $ docker run local_ratelimiterservice:latest
+$ docker run redis:latest
 ```
 
 ### Test the Microservice with GraphQL Playground with the following query:
-- Visit http://127.0.0.1:4000 to start the Playground.
+- Visit http://127.0.0.1:4000 to start the Playground and run the following query:
 ```bash
 query {
   ratelimit(ratelimitInput: {eventName: LOGIN_FAILED, ip: "10.0.0.2", email: "test@test.se"}) {
@@ -60,7 +63,7 @@ curl http://localhost:4000/ -X POST -H "Content-Type: application/json" -d "{ \"
 curl http://localhost:4000/ -X POST -H "Content-Type: application/json" -d "{ \"query\": \"{ serverinfo { hostIPs hostname } }\"}"
 ```
 
-## Load balance Test setup
+## Load Balance - Test setup
 - All tests are done with Docker Swarm in a local development enviroment
 
 The following commands where used to setup our local docker swarm (use commands in a manager node):
@@ -70,9 +73,10 @@ $ docker swarm init
 $ docker stack deploy --compose-file docker-compose.yml swarmstack
 ```
 
-Look at the running stack:
+Look at the running stack and performance:
 ```bash
 $ docker stack services swarmstack
+$ docker stats
 ```
 
 Stop the test and exit your local dev machine from the docker swarm:
@@ -83,7 +87,7 @@ $ docker swarm leave --force
 
 ## Benchmarks setup
 - Load balance testing is done with `Artillery.io` nodejs package
-- Performance profiling is done with the `--prof`-option for nodejs using `https://github.com/davidmarkclements/0x`
+- Performance profiling in nodejs is done with the package: `https://github.com/davidmarkclements/0x`
 ```bash
 $ npm install -g artillery
 $ artillery quick --count 10 -n 20 http://localhost:4000/
@@ -101,22 +105,23 @@ $ artillery report report.json
 $ docker service scale swarmstack_ratelimiter-service=1
 ```
 
-### Summary report @ 22:33:48(+0100) 2020-02-27           
-  Scenarios launched:  4000                           
-  Scenarios completed: 4000                           
-  Requests completed:  4000                           
-  RPS sent: 127.47                                    
-  Request latency:                                    
-    min: 30.3                                         
-    max: 16792.9                                      
-    median: 13728.2                                   
-    p95: 16480.4                                      
-    p99: 16737.3                                      
-  Scenario counts:                                    
-    GraphQL microservice load test: 4000 (100%)       
-  Codes:                                              
-    200: 4000                                         
-
+### Summary report @ 22:33:48(+0100) 2020-02-27    
+```bash       
+Scenarios launched:  4000                           
+Scenarios completed: 4000                           
+Requests completed:  4000                           
+RPS sent: 127.47                                    
+Request latency:                                    
+  min: 30.3                                         
+  max: 16792.9                                      
+  median: 13728.2                                   
+  p95: 16480.4                                      
+  p99: 16737.3                                      
+Scenario counts:                                    
+  GraphQL microservice load test: 4000 (100%)       
+Codes:                                              
+  200: 4000                                         
+```
 ## 1B) Testing with 4 instances of our microservice
 
 ```bash
@@ -124,28 +129,32 @@ $ docker service scale swarmstack_ratelimiter-service=4
 ```
 
 ### Summary report @ 22:34:43(+0100) 2020-02-27
-  Scenarios launched:  4000
-  Scenarios completed: 4000
-  Requests completed:  4000
-  RPS sent: 186.31
-  Request latency:
-    min: 11.5
-    max: 970.9
-    median: 92.2
-    p95: 428.4
-    p99: 638.7
-  Scenario counts:
-    GraphQL microservice load test: 4000 (100%)
-  Codes:
-    200: 4000
+```bash
+Scenarios launched:  4000
+Scenarios completed: 4000
+Requests completed:  4000
+RPS sent: 186.31
+Request latency:
+  min: 11.5
+  max: 970.9
+  median: 92.2
+  p95: 428.4
+  p99: 638.7
+Scenario counts:
+  GraphQL microservice load test: 4000 (100%)
+Codes:
+  200: 4000
+```
 
 ## 2) Comparing results
+```bash
           (1 service) vs  (4 services)
 - min:    30.3ms    vs  11.5ms
 - max:    16792.9ms vs  970.9ms
 - median: 13728.2ms vs  92.2ms
 - p95:    16480.4ms vs  428.4ms
 - p99:    16737.3ms vs  638.7ms
+```
 
 p95 and p99 are the important ones to compare, the 4 services can handle the load better clearly going by the result. 99% of the 4000 requests complete in much shorter time than if we were using a single-process.
 
