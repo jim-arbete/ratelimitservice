@@ -15,9 +15,9 @@ export class RatelimitResolver {
 
   @Query(returns => Serverinfo, { nullable: true })
   serverinfo(): Serverinfo | undefined {
-    let ips: any = Object.entries(os.networkInterfaces());
-    ips = ips.flat(2).filter(f => f.family != 'IPv6');
-    const computedIPs = ips.map(({ address }) => address).filter(Boolean).join();
+    let computedIPs: any = Object.entries(os.networkInterfaces());
+    computedIPs = computedIPs.flat(2).filter(f => f.family != 'IPv6');
+    computedIPs = computedIPs.map(({ address }) => address).filter(Boolean).join();
     return { hostname: os.hostname(), hostIPs: String(computedIPs) };
   }
 }

@@ -1,0 +1,25 @@
+config:
+  target: "http://localhost:4000"
+  phases:
+    - duration: 10
+      arrivalRate: 500
+  variables:
+    eventName: 
+      - "LOGIN_FAILED"
+    ip:
+      - "10.0.0.1"
+      - "10.0.0.2"
+      - "10.0.0.3"
+      - "10.0.0.4"
+    email:
+      - "test1@test.com"
+      - "test2@test.com"
+      - "test3@test.com"
+scenarios:
+  - name: "GraphQL microservice load test"
+    flow:
+      - post:
+          url: "/"
+          json:
+            query: "{ serverinfo { hostIPs hostname } }"
+
