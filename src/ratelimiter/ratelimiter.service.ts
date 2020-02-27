@@ -1,5 +1,10 @@
 import { RatelimitInput, RatelimitResponse } from './ratelimiter.types';
-import { RATELIMIT_BANNEDIPSECONDS } from '../utils/config';
+import {
+  RATELIMIT_BANNED_IP_SECONDS,
+  RATELIMIT_FAILED_REQ_PER_OBSERVED_SECONDS,
+  RATELIMIT_MAX_FAILED_REQ_IN_OBSERVED_PERIOD,
+  RATELIMIT_MAX_FAILED_EMAIL_PER_IP,
+} from '../utils/config';
 import redis from '../utils/redis.config';
 
 type StateBannedIP = {
@@ -19,12 +24,10 @@ interface RatelimitCustomSettings {
   configMaxFailedEmailsPerIP: number; // failed requests using N different emails.
 }
 
-// const computedBannedSeconds = Number(RATELIMIT_BANNEDIPSECONDS) * 1000;
-// const computedBannedSeconds = 2500 * 1000;
-const computedBannedSeconds = 10;
-const computedFailedRequestObservedSeconds = 10;
-const computedMaxFailedRequestInObservedPeriod = 4;
-const computedMaxFailedEmailsPerIP = 1;
+const computedBannedSeconds = Number(RATELIMIT_BANNED_IP_SECONDS) * 1000;
+const computedFailedRequestObservedSeconds = Number(RATELIMIT_FAILED_REQ_PER_OBSERVED_SECONDS);
+const computedMaxFailedRequestInObservedPeriod = Number(RATELIMIT_MAX_FAILED_REQ_IN_OBSERVED_PERIOD);
+const computedMaxFailedEmailsPerIP = Number(RATELIMIT_MAX_FAILED_EMAIL_PER_IP);
 
 // Given an event name, an IP address and an email address as input,
 // build a rate limiting app that bans an IP address for a X seconds
@@ -48,7 +51,10 @@ export class RatelimitService {
   async checkRatelimit({ eventName, ip, email }: RatelimitInput): Promise<RatelimitResponse> {
     let isRateLimited = false;
 
-    console.log('RatelimitService => RATELIMIT_BANNEDIPSECONDS :', RATELIMIT_BANNEDIPSECONDS);
+    console.log('RatelimitService => computedBannedSeconds :', this.configBannedSeconds);
+    console.log('RatelimitService => configFailedRequestObservedSeconds :', this.configFailedRequestObservedSeconds);
+    console.log('RatelimitService => configMaxFailedRequestInObservedPeriod :', this.configMaxFailedRequestInObservedPeriod);
+    console.log('RatelimitService => configMaxFailedEmailsPerIP :', this.configMaxFailedEmailsPerIP);
 
     // If we can exit early to optimize the BAN check do it..
     // ELSE try to se if it's the REQUEST is a BANNABLE offense
